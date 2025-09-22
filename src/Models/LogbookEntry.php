@@ -4,9 +4,12 @@ namespace Rahban\LaravelLogbook\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class LogbookEntry extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'type',
         'method',
@@ -42,10 +45,18 @@ class LogbookEntry extends Model
     protected static function boot()
     {
         parent::boot();
-
+        
         static::creating(function ($model) {
-            $model->created_at = now();
+            // Only set created_at if it's not already set (for factories/tests)
+            if (!$model->created_at) {
+                $model->created_at = now();
+            }
         });
+    }
+
+    protected static function newFactory()
+    {
+        return \Rahban\LaravelLogbook\Database\Factories\LogbookEntryFactory::new();
     }
 
     public function getConnectionName()

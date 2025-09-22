@@ -32,8 +32,8 @@ class LogbookEntryFactory extends Factory
                 'response_headers' => [
                     'content-type' => ['application/json'],
                 ],
-                'request_body' => $this->faker->optional()->json(),
-                'response_body' => $this->faker->optional()->json(),
+                'request_body' => $this->faker->optional()->text(200),
+                'response_body' => $this->faker->optional()->text(200),
                 'metadata' => [
                     'route_name' => $this->faker->optional()->word(),
                 ],

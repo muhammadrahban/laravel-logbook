@@ -4,8 +4,8 @@ namespace Rahban\LaravelLogbook\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Rahban\LaravelLogbook\Models\LogbookEntry;
 use Rahban\LaravelLogbook\Services\LogbookService;
+use Rahban\LaravelLogbook\Models\LogbookEntry;
 
 class LogbookController extends Controller
 {
@@ -19,34 +19,35 @@ class LogbookController extends Controller
     public function dashboard()
     {
         $stats = $this->logbookService->getStats();
-
-        // Recent activity (last 24 hours)
-        $recentEntries = LogbookEntry::where('created_at', '>=', now()->subDay())
-            ->orderByDesc('created_at')
-            ->limit(10)
-            ->get();
-
+        
         // Status code distribution
         $statusCodes = LogbookEntry::requests()
             ->selectRaw('
                 CASE 
                     WHEN status_code >= 200 AND status_code < 300 THEN "2xx"
-                    WHEN status_code >= 300 AND status_code < 400 THEN "3xx" 
+                    WHEN status_code >= 300 AND status_code < 400 THEN "3xx"
                     WHEN status_code >= 400 AND status_code < 500 THEN "4xx"
                     WHEN status_code >= 500 THEN "5xx"
                     ELSE "Other"
                 END as status_group,
-                count(*) as count
+                COUNT(*) as count
             ')
             ->groupBy('status_group')
+            ->orderByDesc('count')
             ->get();
 
-        return view('logbook::dashboard', compact('stats', 'recentEntries', 'statusCodes'));
+        // Recent entries (last 24 hours)
+        $recentEntries = LogbookEntry::where('created_at', '>=', now()->subDay())
+            ->orderByDesc('created_at')
+            ->limit(20)
+            ->get();
+
+        return view('logbook::dashboard', compact('stats', 'statusCodes', 'recentEntries'));
     }
 
     public function tracks(Request $request)
     {
-        $query = LogbookEntry::query()->orderByDesc('created_at');
+        $query = LogbookEntry::query();
 
         // Apply filters
         if ($request->filled('type')) {
@@ -73,28 +74,28 @@ class LogbookController extends Controller
             $query->dateRange($request->from, $request->to);
         }
 
-        $entries = $query->paginate(50)->withQueryString();
+        $entries = $query->orderByDesc('created_at')->paginate(50);
 
         // Get filter options
         $methods = LogbookEntry::requests()
             ->distinct()
             ->pluck('method')
             ->filter()
-            ->sort();
+            ->sort()
+            ->values();
 
         $statusCodes = LogbookEntry::requests()
             ->distinct()
             ->pluck('status_code')
             ->filter()
-            ->sort();
+            ->sort()
+            ->values();
 
         return view('logbook::tracks', compact('entries', 'methods', 'statusCodes'));
     }
 
-    public function show($id)
+    public function show(LogbookEntry $entry)
     {
-        $entry = LogbookEntry::findOrFail($id);
-
         return view('logbook::show', compact('entry'));
     }
 }
