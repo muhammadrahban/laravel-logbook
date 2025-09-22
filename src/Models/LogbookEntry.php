@@ -40,7 +40,8 @@ class LogbookEntry extends Model
         'updated_at' => 'datetime',
     ];
 
-    public $timestamps = false;
+    // Enable timestamps - this was the issue!
+    public $timestamps = true;
 
     protected static function boot()
     {
@@ -50,6 +51,10 @@ class LogbookEntry extends Model
             // Only set created_at if it's not already set (for factories/tests)
             if (!$model->created_at) {
                 $model->created_at = now();
+            }
+            // Ensure updated_at is also set
+            if (!$model->updated_at) {
+                $model->updated_at = now();
             }
         });
     }
@@ -108,6 +113,10 @@ class LogbookEntry extends Model
     // Accessors
     public function getStatusColorAttribute(): string
     {
+        if (!$this->status_code) {
+            return 'secondary';
+        }
+
         if ($this->status_code >= 200 && $this->status_code < 300) {
             return 'success';
         } elseif ($this->status_code >= 300 && $this->status_code < 400) {
@@ -128,5 +137,32 @@ class LogbookEntry extends Model
     public function getTruncatedUrlAttribute(): string
     {
         return strlen($this->url) > 50 ? substr($this->url, 0, 50) . '...' : $this->url;
+    }
+
+    // Add safe date formatting methods
+    public function getFormattedCreatedAtAttribute(): string
+    {
+        return $this->created_at ? $this->created_at->format('Y-m-d H:i:s') : 'N/A';
+    }
+
+    public function getFormattedUpdatedAtAttribute(): string
+    {
+        return $this->updated_at ? $this->updated_at->format('Y-m-d H:i:s') : 'N/A';
+    }
+
+    public function getTimeAgoAttribute(): string
+    {
+        return $this->created_at ? $this->created_at->diffForHumans() : 'N/A';
+    }
+
+    public function getMethodColorAttribute(): string
+    {
+        return match ($this->method) {
+            'GET' => 'primary',
+            'POST' => 'success',
+            'PUT', 'PATCH' => 'warning',
+            'DELETE' => 'danger',
+            default => 'secondary',
+        };
     }
 }
