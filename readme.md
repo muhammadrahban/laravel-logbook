@@ -17,8 +17,8 @@ A lightweight Laravel package to record, monitor, and manage API user journeys w
 
 ## 📋 Requirements
 
-- PHP 8.0 or higher
-- Laravel 9.0, 10.0, or 11.0
+- PHP 8.1 or higher
+- Laravel 9.0, 10.0, 11.0, or 12.0
 - MySQL, PostgreSQL, or SQLite database
 
 ## 🚀 Installation
