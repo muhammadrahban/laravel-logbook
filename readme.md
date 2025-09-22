@@ -32,11 +32,13 @@ composer require rahban/laravel-logbook
 ### 2. Publish Configuration and Migrations
 
 **Publish the configuration file:**
+
 ```bash
 php artisan vendor:publish --tag=logbook-config
 ```
 
 **Publish and run the migrations:**
+
 ```bash
 php artisan vendor:publish --tag=logbook-migrations
 php artisan migrate
@@ -45,16 +47,19 @@ php artisan migrate
 ### 3. Optional: Publish Views and Assets
 
 **Customize the admin dashboard views:**
+
 ```bash
 php artisan vendor:publish --tag=logbook-views
 ```
 
 **Publish frontend assets:**
+
 ```bash
 php artisan vendor:publish --tag=logbook-assets
 ```
 
 **All-in-one publishing:**
+
 ```bash
 php artisan vendor:publish --provider="Rahban\LaravelLogbook\Providers\LogbookServiceProvider"
 ```
@@ -81,6 +86,7 @@ LOGBOOK_EXTRACT_USER_FROM_TOKEN=true
 **Option A: Global Middleware (Recommended for APIs)**
 
 Add to `app/Http/Kernel.php`:
+
 ```php
 protected $middleware = [
     // ...existing middleware...
@@ -91,6 +97,7 @@ protected $middleware = [
 **Option B: Route-specific Middleware**
 
 Apply to specific routes:
+
 ```php
 // In routes/api.php or routes/web.php
 Route::middleware(['logbook'])->group(function () {
@@ -167,21 +174,21 @@ use Rahban\LaravelLogbook\Traits\HasLogbook;
 class User extends Authenticatable
 {
     use HasLogbook;
-    
+
     // Now you can use:
     public function login()
     {
         $this->logLogin(['device' => 'mobile']);
         // Automatically logs user.login event
     }
-    
+
     public function updateProfile()
     {
         $this->logAction('profile_updated', [
             'fields' => ['name', 'email']
         ]);
     }
-    
+
     public function logout()
     {
         $this->logLogout();
@@ -202,14 +209,14 @@ class OrderController extends Controller
     public function store(Request $request, LogbookService $logbook)
     {
         $order = Order::create($request->all());
-        
+
         // Log the business event
         $logbook->event('order.created', [
             'order_id' => $order->id,
             'amount' => $order->total,
             'items_count' => $order->items->count(),
         ], auth()->id());
-        
+
         return response()->json($order);
     }
 }
@@ -222,12 +229,14 @@ class OrderController extends Controller
 Visit: `http://your-app.com/logbook`
 
 **Default credentials:**
+
 - Username: `admin`
 - Password: `your_secure_password` (from .env)
 
 ### Dashboard Features
 
 #### 📈 **Overview Page**
+
 - Total requests and custom events count
 - Error rate percentage and average response time
 - Status code distribution (2xx, 3xx, 4xx, 5xx)
@@ -235,6 +244,7 @@ Visit: `http://your-app.com/logbook`
 - Top endpoints by request count
 
 #### 📋 **Request Tracks**
+
 - Paginated list of all logged requests
 - **Advanced filtering:**
   - HTTP method (GET, POST, PUT, DELETE)
@@ -245,6 +255,7 @@ Visit: `http://your-app.com/logbook`
   - Response time ranges
 
 #### 🔍 **Entry Details**
+
 - Complete request/response inspection
 - Formatted JSON viewer
 - Headers analysis
@@ -253,6 +264,7 @@ Visit: `http://your-app.com/logbook`
 - Route and middleware details
 
 #### 🧹 **Management Panel**
+
 - **Storage statistics:** Total entries, storage size, old entries count
 - **Cleanup operations:**
   - Clean by days (older than X days)
@@ -292,7 +304,7 @@ protected function schedule(Schedule $schedule)
     $schedule->command('logbook:cleanup --force')
              ->daily()
              ->at('02:00');
-             
+
     // Weekly cleanup with custom retention
     $schedule->command('logbook:cleanup --days=30 --force')
              ->weekly()
@@ -309,37 +321,37 @@ The configuration file `config/logbook.php` provides extensive customization:
 return [
     // Enable/disable logging
     'enabled' => env('LOGBOOK_ENABLED', true),
-    
+
     // Admin UI settings
     'ui_enabled' => env('LOGBOOK_UI_ENABLED', true),
     'ui_route_prefix' => env('LOGBOOK_UI_PREFIX', 'logbook'),
-    
+
     // Authentication
     'auth_user' => env('LOGBOOK_USER', 'admin'),
     'auth_pass' => env('LOGBOOK_PASS', 'password'),
-    
+
     // Data retention
     'retention_days' => env('LOGBOOK_RETENTION_DAYS', 90),
-    
+
     // Security - fields to automatically mask
     'mask_fields' => [
-        'password', 'password_confirmation', 'token', 'api_key', 
-        'secret', 'access_token', 'refresh_token', 'credit_card', 
+        'password', 'password_confirmation', 'token', 'api_key',
+        'secret', 'access_token', 'refresh_token', 'credit_card',
         'ssn', 'cvv',
     ],
-    
+
     // Body size limit (10KB default)
     'truncate_body_at' => env('LOGBOOK_TRUNCATE_AT', 10240),
-    
+
     // Routes to exclude from logging
     'excluded_routes' => [
         'logbook/*', 'telescope/*', '_debugbar/*', 'health-check',
     ],
-    
+
     // Token extraction settings
     'extract_user_from_token' => env('LOGBOOK_EXTRACT_USER_FROM_TOKEN', true),
     'log_request_start' => env('LOGBOOK_LOG_REQUEST_START', true),
-    
+
     // Performance settings
     'async_logging' => env('LOGBOOK_ASYNC_LOGGING', app()->environment('production')),
     'queue_connection' => env('LOGBOOK_QUEUE_CONNECTION', 'default'),
@@ -349,7 +361,9 @@ return [
 ## 🔒 Security Features
 
 ### Automatic Data Masking
+
 Sensitive fields are automatically masked in request/response bodies:
+
 - Passwords and password confirmations
 - API keys and access tokens
 - Credit card numbers and CVV codes
@@ -357,13 +371,16 @@ Sensitive fields are automatically masked in request/response bodies:
 - Custom sensitive fields (configurable)
 
 ### Header Sanitization
+
 Authorization headers and cookies are automatically sanitized:
+
 ```php
 // Original: Authorization: Bearer abc123def456ghi789
 // Logged:   Authorization: Bearer abc123de***
 ```
 
 ### Admin Panel Protection
+
 - Basic HTTP authentication
 - CSRF protection on all management operations
 - Session-based authentication
@@ -372,17 +389,20 @@ Authorization headers and cookies are automatically sanitized:
 ## 📈 Performance Considerations
 
 ### Production Optimizations
+
 - **Asynchronous logging** in production environments
 - **Database indexing** for optimal query performance
 - **Body truncation** to prevent large data storage
 - **Configurable retention policies** for automated cleanup
 
 ### Memory Management
+
 - Efficient data processing with minimal memory footprint
 - Stream-based body processing for large requests
 - Automatic garbage collection of old entries
 
 ### Scalability
+
 - Supports horizontal scaling with shared database
 - Queue-based processing for high-traffic applications
 - Configurable database connections for separation
@@ -403,7 +423,9 @@ vendor/bin/phpunit --filter=test_middleware_logs_requests
 ```
 
 ### Test Coverage
+
 The package includes comprehensive tests covering:
+
 - Custom event logging
 - Request/response logging
 - User ID extraction from tokens
@@ -416,23 +438,28 @@ The package includes comprehensive tests covering:
 ### Common Issues
 
 **SQLite Driver Missing (for testing):**
+
 ```bash
 sudo apt-get install php8.3-sqlite3
 ```
 
 **Permission Issues:**
+
 ```bash
 php artisan config:cache
 php artisan route:cache
 ```
 
 **Large Log Files:**
+
 ```bash
 php artisan logbook:cleanup --days=7 --force
 ```
 
 ### Debug Mode
+
 Enable debug logging in your `.env`:
+
 ```env
 LOGBOOK_ENABLED=true
 LOG_LEVEL=debug
@@ -480,6 +507,6 @@ This package is open-sourced software licensed under the [MIT license](LICENSE).
 
 **Made with ❤️ by [Muhammad Rahban](https://github.com/rahban)**
 
-*Laravel Logbook - Track Every Journey*
+_Laravel Logbook - Track Every Journey_
 
 </div>
