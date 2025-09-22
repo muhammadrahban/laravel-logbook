@@ -33,7 +33,7 @@
                     </tr>
                     <tr>
                         <th>Timestamp</th>
-                        <td>{{ $entry->created_at->format('Y-m-d H:i:s') }}</td>
+                        <td>{{ $entry->created_at->format('Y-m-d H:i:s') ?? 'N/A' }}</td>
                     </tr>
                     @if($entry->type === 'request')
                         <tr>

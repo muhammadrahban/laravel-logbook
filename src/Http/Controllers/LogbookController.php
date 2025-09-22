@@ -94,8 +94,9 @@ class LogbookController extends Controller
         return view('logbook::tracks', compact('entries', 'methods', 'statusCodes'));
     }
 
-    public function show(LogbookEntry $entry)
+    public function show(int $id)
     {
+        $entry = LogbookEntry::findOrFail($id);
         return view('logbook::show', compact('entry'));
     }
 }
