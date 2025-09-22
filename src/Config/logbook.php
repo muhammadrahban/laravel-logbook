@@ -48,8 +48,11 @@ return [
         'token',
         'api_key',
         'secret',
+        'access_token',
+        'refresh_token',
         'credit_card',
         'ssn',
+        'cvv',
     ],
 
     /*
@@ -85,6 +88,8 @@ return [
         'telescope/*',
         'horizon/*',
         '_debugbar/*',
+        'health-check',
+        'up',
     ],
 
     /*
@@ -112,4 +117,50 @@ return [
     |
     */
     'database_connection' => env('LOGBOOK_DB_CONNECTION', null),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Request Start Logging
+    |--------------------------------------------------------------------------
+    |
+    | Log detailed request start events
+    |
+    */
+    'log_request_start' => env('LOGBOOK_LOG_REQUEST_START', true),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Token Extraction
+    |--------------------------------------------------------------------------
+    |
+    | Extract user information from tokens
+    |
+    */
+    'extract_user_from_token' => env('LOGBOOK_EXTRACT_USER_FROM_TOKEN', true),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Token Drivers
+    |--------------------------------------------------------------------------
+    |
+    | Support for different token types
+    |
+    */
+    'token_drivers' => [
+        'sanctum' => true,  // Laravel Sanctum support
+        'passport' => false, // Laravel Passport support (requires additional setup)
+        'custom' => false,   // Custom token validation
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Async Logging
+    |--------------------------------------------------------------------------
+    |
+    | Queue settings for async logging in production
+    |
+    */
+    'async_logging' => env('LOGBOOK_ASYNC_LOGGING', app()->environment('production')),
+    'queue_connection' => env('LOGBOOK_QUEUE_CONNECTION', 'default'),
+    'queue_name' => env('LOGBOOK_QUEUE_NAME', 'default'),
 ];

@@ -9,42 +9,50 @@ use Illuminate\Support\Str;
 
 class LogbookService
 {
-    public function logRequest(Request $request, Response $response, float $responseTime): void
+    protected function isEnabled(): bool
     {
-        if (!config('logbook.enabled', true)) {
+        return config('logbook.enabled', true);
+    }
+
+    public function logRequest(
+        Request $request,
+        $response,
+        float $responseTime,
+        ?int $userId = null,
+        ?string $tokenId = null
+    ): void {
+        if (!$this->isEnabled()) {
             return;
         }
 
-        if ($this->shouldExcludeRoute($request)) {
-            return;
-        }
-
-        if (!in_array($request->method(), config('logbook.included_methods', []))) {
-            return;
-        }
+        // Use provided userId or try to get from authenticated user
+        $finalUserId = $userId ?? ($request->user()?->id);
 
         $data = [
             'type' => 'request',
             'method' => $request->method(),
             'url' => $request->fullUrl(),
-            'endpoint' => $this->extractEndpoint($request),
+            'endpoint' => $this->getEndpoint($request),
             'status_code' => $response->getStatusCode(),
             'response_time' => $responseTime,
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
-            'user_id' => $request->user()?->id,
-            'token_id' => $this->extractTokenId($request),
-            'request_headers' => $this->sanitizeHeaders($request->headers->all()),
-            'response_headers' => $this->sanitizeHeaders($response->headers->all()),
-            'request_body' => $this->processBody($request->getContent()),
-            'response_body' => $this->processBody($response->getContent()),
+            'user_id' => $finalUserId,
+            'token_id' => $tokenId,
+            'request_headers' => $this->maskSensitiveData($request->headers->all()),
+            'response_headers' => $this->maskSensitiveData($response->headers->all()),
+            'request_body' => $this->formatRequestBody($request),
+            'response_body' => $this->formatResponseBody($response),
             'metadata' => [
                 'route_name' => $request->route()?->getName(),
-                'controller' => $this->getControllerAction($request),
+                'action' => $request->route()?->getActionName(),
+                'middleware' => $request->route()?->middleware() ?? [],
+                'has_auth_token' => $request->bearerToken() !== null,
+                'is_authenticated' => $finalUserId !== null,
             ],
         ];
 
-        LogbookEntry::create($data);
+        $this->store($data);
     }
 
     public function event(string $eventName, array $data = [], ?int $userId = null): void
@@ -205,5 +213,37 @@ class LogbookService
             'avg_response_time' => $avgResponseTime ? round($avgResponseTime, 2) : 0,
             'top_endpoints' => $topEndpoints,
         ];
+    }
+
+    protected function getEndpoint(Request $request): string
+    {
+        $route = $request->route();
+
+        if ($route) {
+            return $route->uri();
+        }
+
+        // Fallback to path if route is not available
+        return $request->path();
+    }
+
+    protected function formatRequestBody(Request $request): ?string
+    {
+        $body = $request->getContent();
+        return $this->processBody($body);
+    }
+
+    protected function formatResponseBody($response): ?string
+    {
+        if (method_exists($response, 'getContent')) {
+            return $this->processBody($response->getContent());
+        }
+
+        return null;
+    }
+
+    protected function store(array $data): void
+    {
+        LogbookEntry::create($data);
     }
 }
