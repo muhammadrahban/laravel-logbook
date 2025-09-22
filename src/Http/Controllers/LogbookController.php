@@ -19,7 +19,7 @@ class LogbookController extends Controller
     public function dashboard()
     {
         $stats = $this->logbookService->getStats();
-        
+
         // Status code distribution
         $statusCodes = LogbookEntry::requests()
             ->selectRaw('

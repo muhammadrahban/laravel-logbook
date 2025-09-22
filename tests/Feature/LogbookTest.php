@@ -33,7 +33,7 @@ class LogbookTest extends TestCase
             'database' => ':memory:',
             'prefix' => '',
         ]);
-        
+
         // Ensure logbook is enabled for tests
         $app['config']->set('logbook.enabled', true);
     }
@@ -64,21 +64,21 @@ class LogbookTest extends TestCase
         // Test without middleware first to ensure the route works
         $response = $this->withoutMiddleware()->get('/test-route');
         $response->assertStatus(200);
-        
+
         // Now test the service directly since middleware might have issues in test environment
         $request = \Illuminate\Http\Request::create('/test-route', 'GET');
         $response = new \Illuminate\Http\Response(['message' => 'test'], 200);
-        
+
         // Test the service directly
         $logbookService = app('logbook');
         $logbookService->logRequest($request, $response, 100.0);
-        
+
         // Check if the request was logged
         $this->assertDatabaseHas('logbook_entries', [
             'type' => 'request',
             'method' => 'GET',
         ]);
-        
+
         // Check that we have at least one entry
         $this->assertGreaterThan(0, LogbookEntry::count());
     }
@@ -99,7 +99,7 @@ class LogbookTest extends TestCase
 
         // Run cleanup command
         $this->artisan('logbook:cleanup', ['--days' => 90, '--force' => true])
-             ->assertExitCode(0);
+            ->assertExitCode(0);
 
         // Should have only the recent entries left
         $this->assertEquals(3, LogbookEntry::count());

@@ -45,7 +45,7 @@ class LogbookEntry extends Model
     protected static function boot()
     {
         parent::boot();
-        
+
         static::creating(function ($model) {
             // Only set created_at if it's not already set (for factories/tests)
             if (!$model->created_at) {
